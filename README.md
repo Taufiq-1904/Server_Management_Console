@@ -1,9 +1,6 @@
 # Server_Management_Console
 A simple system for managing user access, monitoring servers, and storing activity logs, container-based and centralized login.
 
-# Server Management Console
-
-Sistem manajemen server internal dengan autentikasi terpusat menggunakan Zitadel, monitoring container dengan cAdvisor, dan logging aktivitas.
 
 ## 🏗️ Arsitektur
 
