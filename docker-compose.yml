@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 services:
   postgres:
     image: postgres:15-alpine
@@ -121,3 +122,128 @@ volumes:
 networks:
   server_network:
     driver: bridge
+=======
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: server_postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: server_management
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - server_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zitadel:
+    image: ghcr.io/zitadel/zitadel:v2.62.1
+    container_name: server_zitadel
+    command:
+      - "start-from-init"
+      - "--masterkeyFromEnv"
+      - "--tlsMode"
+      - "disabled"
+    environment:
+      ZITADEL_DATABASE_POSTGRES_HOST: postgres
+      ZITADEL_DATABASE_POSTGRES_PORT: "5432"
+      ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: zitadel123
+      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: admin
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: admin123
+      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+
+      ZITADEL_DEFAULTINSTANCE_EMAILVERIFICATIONREQUIRED: "false"
+      ZITADEL_DEFAULTINSTANCE_SKIPEMAILVERIFICATION: "true"
+
+      ZITADEL_HTTP_MODE: http
+      ZITADEL_EXTERNALDOMAIN: "localhost"
+      ZITADEL_EXTERNALPORT: "8080"
+      ZITADEL_EXTERNALSECURE: "false"
+
+      ZITADEL_MASTERKEY: MasterkeyNeedsToHave32Characters
+      ZITADEL_FIRSTINSTANCE_ORG_NAME: ServerManagement
+      ZITADEL_FIRSTINSTANCE_PATPATH: /machinekey/sa.token
+
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+      - "8082:8082"
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - server_network
+    volumes:
+      - zitadel_data:/data
+      - ./machinekey:/machinekey
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: server_backend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://admin:admin123@postgres:5432/server_management
+      ZITADEL_ISSUER: http://zitadel:8080
+      ZITADEL_CLIENT_ID: ${ZITADEL_CLIENT_ID}
+      ZITADEL_CLIENT_SECRET: ${ZITADEL_CLIENT_SECRET}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - zitadel
+    networks:
+      - server_network
+    volumes:
+      - ./logs:/app/logs
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: server_cadvisor
+    ports:
+      - "8090:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    networks:
+      - server_network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: server_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - server_network
+
+volumes:
+  postgres_data:
+  zitadel_data:
+
+networks:
+  server_network:
+    driver: bridge
+>>>>>>> 0297ea5f8ee57a0f9309fdbe4ac3d6f35bbafdbb
