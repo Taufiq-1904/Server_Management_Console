@@ -1,0 +1,10 @@
+# Environment
+.env
+
+# Node
+node_modules/
+
+# Logs
+logs/
+*.log
+zitadel_logs.txt

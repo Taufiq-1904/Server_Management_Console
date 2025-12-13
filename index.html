@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Asset Borrowing System</title>
+<style>
+    body { margin: 0; font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #333; min-height: 100vh; }
+    .container { width: 100%; max-width: 420px; margin: 60px auto; background: white; padding: 30px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+    h2 { margin-top: 0; text-align: center; color: #2d3436; }
+    .role-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+    .role-btn { flex: 1; padding: 12px; border: 2px solid #dcdde1; background: white; border-radius: 8px; cursor: pointer; transition: all 0.3s; font-size: 14px; font-weight: 500; }
+    .role-btn:hover { border-color: #4b7bec; background: #f0f3ff; }
+    .role-btn.active { border-color: #4b7bec; background: #4b7bec; color: white; }
+    .role-btn.admin { border-color: #e74c3c; } .role-btn.admin.active { background: #e74c3c; border-color: #e74c3c; }
+    .role-btn.manager { border-color: #f39c12; } .role-btn.manager.active { background: #f39c12; border-color: #f39c12; }
+    .role-btn.user { border-color: #27ae60; } .role-btn.user.active { background: #27ae60; border-color: #27ae60; }
+    input, select { width: 100%; padding: 12px 14px; margin: 10px 0; border-radius: 8px; border: 1px solid #dcdde1; font-size: 14px; outline: none; box-sizing: border-box; }
+    button.login-btn, button.action-btn { width: 100%; padding: 14px; background: #4b7bec; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+    .demo-accounts { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666; }
+    .dashboard { display: none; max-width: 800px; margin: 40px auto; padding: 30px; background: white; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); position: relative;}
+    .section { margin-top: 30px; padding: 20px; border: 1px solid #e1e8ed; border-radius: 10px; }
+    .hidden { display: none; }
+    .logout-btn { position: absolute; top: 20px; right: 20px; padding: 8px 16px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    .status-pending { color: orange; font-weight: bold; }
+    .status-approved { color: green; font-weight: bold; }
+    .status-rejected { color: red; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div class="container" id="loginBox">
+    <h2>🔐 Asset Borrowing System</h2>
+    
+    <div class="role-selector">
+        <button class="role-btn admin" onclick="selectRole('admin')">Admin</button>
+        <button class="role-btn manager" onclick="selectRole('manager')">Manager</button>
+        <button class="role-btn user active" onclick="selectRole('user')">User</button>
+    </div>
+
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+    <button class="login-btn" onclick="login()">Login</button>
+
+    <div class="demo-accounts">
+        <h4>📋 Demo Accounts:</h4>
+        <div>Admin: admin / admin123</div>
+        <div>Manager: manager / manager123</div>
+        <div>User: user / user123</div>
+    </div>
+</div>
+
+<div class="dashboard" id="dashboard">
+    <button class="logout-btn" onclick="logout()">Logout</button>
+    <h2>Dashboard <span id="roleBadge"></span></h2>
+
+    <div id="userSection" class="section hidden">
+        <h3>📦 Request Borrow</h3>
+        <input id="assetId" placeholder="Asset ID (e.g., LAPTOP-001)">
+        <button class="action-btn" onclick="requestLoan()">Submit Request</button>
+    </div>
+
+    <div id="managerSection" class="section hidden">
+        <h3>✅ Process Loan</h3>
+        <input id="loanId" placeholder="Loan ID to Process">
+        <select id="status">
+            <option value="approved">✓ Approve</option>
+            <option value="rejected">✗ Reject</option>
+        </select>
+        <button class="action-btn" onclick="approve()">Process Request</button>
+
+        <h3>📋 Loan History & Requests</h3>
+        <button class="action-btn" style="background: #f39c12;" onclick="loadHistory()">Refresh History</button>
+        <table id="historyTable">
+            <thead>
+                <tr><th>ID</th><th>User</th><th>Asset</th><th>Status</th><th>Date</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="adminSection" class="section hidden">
+        
+        <h3>⚙️ User Database</h3>
+        <button class="action-btn" style="background:#e74c3c" onclick="loadUsers()">Refresh Users</button>
+        <table id="userTable">
+            <thead>
+                <tr><th>ID</th><th>Username</th><th>Password</th><th>Role</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h3 style="margin-top: 40px; border-top: 2px dashed #ddd; padding-top: 20px;">📜 System Activity Logs</h3>
+        <button class="action-btn" style="background:#34495e" onclick="loadLogs()">Refresh Logs</button>
+        <table id="logTable">
+            <thead>
+                <tr><th>Time</th><th>User</th><th>Activity</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+    </div>
+</div>
+
+<script>
+let currentUser = null;
+let selectedRole = 'user';
+
+function selectRole(role) {
+    selectedRole = role;
+    document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    const creds = {
+        admin: { u: 'admin', p: 'admin123' },
+        manager: { u: 'manager', p: 'manager123' },
+        user: { u: 'user', p: 'user123' }
+    };
+    document.getElementById('username').value = creds[role].u;
+    document.getElementById('password').value = creds[role].p;
+}
+
+function login() {
+    fetch('/auth/login', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value
+        })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.user) return alert("❌ Login failed!");
+        currentUser = d.user;
+        document.getElementById('loginBox').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        
+        ['userSection', 'managerSection', 'adminSection'].forEach(id => document.getElementById(id).classList.add('hidden'));
+
+        if (d.user.role === "user") document.getElementById('userSection').classList.remove('hidden');
+        if (d.user.role === "manager") {
+            document.getElementById('managerSection').classList.remove('hidden');
+            loadHistory();
+        }
+        if (d.user.role === "admin") {
+            document.getElementById('adminSection').classList.remove('hidden');
+            loadUsers();
+            loadLogs(); // <-- Auto load logs
+        }
+    })
+    .catch(e => alert("❌ Error connecting to server"));
+}
+
+function requestLoan() {
+    fetch('/user/loan', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: currentUser.id, asset_id: document.getElementById('assetId').value })
+    })
+    .then(r => r.json())
+    .then(d => { 
+        if(d.message === "Success") alert("✅ Request submitted!"); 
+        else alert("❌ " + d.message);
+    });
+}
+
+function approve() {
+    fetch('/manager/loan/approve', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ loan_id: document.getElementById('loanId').value, status: document.getElementById('status').value })
+    })
+    .then(() => {
+        alert("✅ Updated!");
+        loadHistory();
+    });
+}
+
+function loadHistory() {
+    fetch('/manager/history').then(r => r.json()).then(data => {
+        const tbody = document.querySelector('#historyTable tbody');
+        tbody.innerHTML = '';
+        data.forEach(row => {
+            tbody.innerHTML += `<tr>
+                <td>${row.id}</td><td>${row.username}</td><td>${row.asset_id}</td>
+                <td class="status-${row.status}">${row.status}</td>
+                <td>${new Date(row.request_date).toLocaleDateString()}</td>
+            </tr>`;
+        });
+    });
+}
+
+function loadUsers() {
+    fetch('/admin/users').then(r => r.json()).then(data => {
+        const tbody = document.querySelector('#userTable tbody');
+        tbody.innerHTML = '';
+        data.forEach(user => {
+            tbody.innerHTML += `<tr>
+                <td>${user.id}</td><td>${user.username}</td>
+                <td style="font-family:monospace; color:red;">${user.password}</td>
+                <td>${user.role}</td>
+            </tr>`;
+        });
+    });
+}
+
+// FUNGSI BARU: Load System Logs
+function loadLogs() {
+    fetch('/admin/logs').then(r => r.json()).then(data => {
+        const tbody = document.querySelector('#logTable tbody');
+        tbody.innerHTML = '';
+        data.forEach(log => {
+            // Format tanggal biar enak dibaca
+            const timeString = new Date(log.created_at).toLocaleString();
+            tbody.innerHTML += `<tr>
+                <td style="font-size:12px; color:#666;">${timeString}</td>
+                <td><b>${log.username}</b></td>
+                <td>${log.activity}</td>
+            </tr>`;
+        });
+    });
+}
+
+function logout() { location.reload(); }
+window.onload = function() { selectRole('user'); };
+</script>
+</body>
+</html>

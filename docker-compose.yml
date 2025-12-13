@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123
-      POSTGRES_DB: server_management
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
@@ -19,6 +19,7 @@ services:
       timeout: 5s
       retries: 5
 
+
   zitadel:
     image: ghcr.io/zitadel/zitadel:v2.62.1
     container_name: server_zitadel
@@ -30,25 +31,30 @@ services:
     environment:
       ZITADEL_DATABASE_POSTGRES_HOST: postgres
       ZITADEL_DATABASE_POSTGRES_PORT: "5432"
+
       ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
-      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: zitadel
-      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: zitadel123
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: admin@admin.com
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: admin123
       ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+
       ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: admin
       ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: admin123
       ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_DATABASE: postgres
 
-      ZITADEL_DEFAULTINSTANCE_EMAILVERIFICATIONREQUIRED: "false"
-      ZITADEL_DEFAULTINSTANCE_SKIPEMAILVERIFICATION: "true"
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME: admin@admin.com
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: Password1!
 
       ZITADEL_HTTP_MODE: http
-      ZITADEL_EXTERNALDOMAIN: "localhost"
+      ZITADEL_EXTERNALDOMAIN: localhost
       ZITADEL_EXTERNALPORT: "8080"
       ZITADEL_EXTERNALSECURE: "false"
-
+      
       ZITADEL_MASTERKEY: MasterkeyNeedsToHave32Characters
       ZITADEL_FIRSTINSTANCE_ORG_NAME: ServerManagement
       ZITADEL_FIRSTINSTANCE_PATPATH: /machinekey/sa.token
+
+      ZITADEL_LOG_LEVEL: debug
 
     ports:
       - "8080:8080"
